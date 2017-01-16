@@ -1,6 +1,6 @@
 node( 'buildvm-devops' ) {
 	stage( 'Checkout' ) {
-		checkout scm
+#		checkout scm
 	}
 
 	stage('Output to console') {
