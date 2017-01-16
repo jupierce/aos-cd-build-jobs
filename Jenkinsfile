@@ -4,4 +4,5 @@ node( 'buildvm-devops' ) {
 	sh 'echo pwd: $PWD'
 	sh 'date'
 	sh 'date'
+	sh 'ls README.MD'
 }
