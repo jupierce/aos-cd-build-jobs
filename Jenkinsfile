@@ -1,5 +1,6 @@
 node( 'buildvm-devops' ) {
 	stage('Output to console') {
+		echo "environment: ${ENV}"
 		echo 'Hello, world' 
 		sh 'echo "Hello, world -- buildvm!"'
 		sh 'echo pwd: $PWD'
