@@ -1,9 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 
 set -o errexit   # All non-zero statuses will terminate script
 set -o pipefail  # All components of piped command will terminate script if they fail
 
-opts=`getopt -o hm:n: --long help,major:,minor: -n 'merge-and-build' -- "$@"`
+opts="$( getopt -o hm:n: --long help,major:,minor: -n 'merge-and-build' -- "$@" )"
 eval set -- "$opts"
 major=""
 minor=""
@@ -14,23 +14,41 @@ function usage() {
     echo "Syntax: --major=X --minor=Y"
 }
 
+# The use of `getopt` is considered less than desirable often, but is the only
+# way to get double-dash long-form options. See also:
+#
+# Unless it's the version from util-linux, and you use its advanced mode, never
+# use getopt(1). Traditional versions of getopt cannot handle empty argument
+# strings, or arguments with embedded whitespace. The POSIX shell (and others)
+# offer getopts which is safe to use instead.
+# http://mywiki.wooledge.org/BashFAQ/035#getopts
 while true; do
   case "$1" in
-    -h | --help )    help=1; shift ;;
-    -m | --major ) major="$2"; shift; shift ;;
-    -n | --minor ) minor="$2"; shift; shift ;;
-    -- ) shift; break ;;
-    * ) break ;;
+    -h | --help )
+        help=1; shift
+        ;;
+    -m | --major )
+        major="$2"; shift; shift
+        ;;
+    -n | --minor )
+        minor="$2"; shift; shift
+        ;;
+    -- )
+        shift; break
+        ;;
+    * )
+        break
+        ;;
   esac
 done
 
 
-if [[ "$help" == "1" ]]; then
+if [[ "${help}" == "1" ]]; then
     usage
     exit 1
 fi
 
-if [[ "$major" == "" || "$minor" == "" ]]; then
+if [[ -z "${major}" || -z "${minor}" ]]; then
     echo "--major and --minor are required"
     usage
     exit 1
@@ -39,9 +57,9 @@ fi
 set -o xtrace  # Verbose script execution output
 ose_version="${major}.${minor}"
 
-buildpath="~/go"
+buildpath="${HOME}/go"
 cd "$buildpath"
-export GOPATH=`pwd`
+GOPATH="$( pwd )"; export GOPATH
 workpath="${buildpath}/src/github.com/openshift/"
 cd "${workpath}"
 
@@ -71,12 +89,12 @@ git commit -m "Merge remote-tracking branch upstream/master, bump origin-web-con
 
 # Have bew build the RPMs
 tito tag --accept-auto-changelog
-export VERSION="v$(grep Version: origin.spec | awk '{print $2}')"
-echo ${VERSION}
+VERSION="v$(grep Version: origin.spec | awk '{print $2}')"; export VERSION
+echo "${VERSION}"
 git push
 ## Need kerberos credential      * How to initialize kerberos credential
 # kinit ??
-task_number=`tito release --yes --test aos-${ose_version} | grep 'Created task:' | awk '{print $3}'`
+task_number="$( tito release --yes --test "aos-${ose_version}" | grep 'Created task:' | awk '{print $3}' )"
 brew watch-task "${task_number}"
 
 # RPMs are now built, on to the images
