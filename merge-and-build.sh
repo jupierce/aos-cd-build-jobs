@@ -2,6 +2,7 @@
 
 set -o errexit   # All non-zero statuses will terminate script
 set -o pipefail  # All components of piped command will terminate script if they fail
+set -o nounset   # Makes substituting unset variables an error
 
 opts="$( getopt -o hm:n: --long help,major:,minor: -n 'merge-and-build' -- "$@" )"
 eval set -- "$opts"
@@ -45,22 +46,21 @@ done
 
 if [[ "${help}" == "1" ]]; then
     usage
-    exit 1
+    exit 0
 fi
 
 if [[ -z "${major}" || -z "${minor}" ]]; then
-    echo "--major and --minor are required"
-    usage
+    echo >&2 "--major and --minor are required"
+    usage >&2
     exit 1
 fi
 
 set -o xtrace  # Verbose script execution output
 ose_version="${major}.${minor}"
 
-buildpath="${HOME}/go"
-cd "$buildpath"
-GOPATH="$( pwd )"; export GOPATH
-workpath="${buildpath}/src/github.com/openshift/"
+GOPATH=${HOME}/go
+export GOPATH
+workpath=${GOPATH}/src/github.com/openshift/
 cd "${workpath}"
 
 # Clean up old clones
@@ -76,11 +76,11 @@ git merge master -m "Merge master into enterprise-${ose_version}"
 cd "${workpath}"
 git clone git@github.com:openshift/ose.git
 cd ose
-git add remote upstream git@github.com:openshift/origin.git
-git fetch --all
+git remote add upstream git@github.com:openshift/origin.git
+git fetch upstream master
 git merge -m "Merge remote-tracking branch upstream/master" upstream/master
 # Pull in the origin-web-console stuff
-vc_commit="$(GIT_REF=master hack/vendor-console.sh 2>/dev/null | grep "Vendoring origin-web-console" | awk '{print $4}')"
+vc_commit=$(GIT_REF=master hack/vendor-console.sh | awk '/Vendoring origin-web-console/{print $4}')
 git add pkg/assets/bindata.go
 git add pkg/assets/java/bindata.go
 git commit -m "Merge remote-tracking branch upstream/master, bump origin-web-console ${vc_commit}"
