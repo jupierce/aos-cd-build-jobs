@@ -1,1 +1,1 @@
-Test jobs for the buildvm to automate build jobs.  This should be replaced by Jenkinsfile instances in ose.
+# This content has been moved to https://github.com/jupierce/aos-cd-jobs/tree/build/ose
